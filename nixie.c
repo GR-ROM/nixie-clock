@@ -29,6 +29,12 @@ void driveCathode(unsigned char digit) {
     }
 }
 
+/*
+ * A routine responsive for dynamic indication, should 
+ * be called at least 100 times per second
+ * anode - points to the variable with a number of the current active anode
+ * display - four bytes display buffer
+ */
 void driveNixie(unsigned char* anode, unsigned char* display) {
     /* Dynamic indication */
     AN1 = 0;
@@ -43,5 +49,5 @@ void driveNixie(unsigned char* anode, unsigned char* display) {
         default: break;
     }
     driveCathode(display[(*anode)++]);
-    if (*anode > 3) anode = 0;
+    if (*anode > 3) *anode = 0;
 }

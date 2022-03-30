@@ -7,7 +7,7 @@
 #define FREQUENCY_TO_PR_CONVERT(F) (uint8_t)(((_XTAL_FREQ)/ \
 (4*(F))/(TIMER_PRESCALER))-1)
 
-void setDuty(int duty) {
+void setDuty(unsigned int duty) {
     CCP1CONbits.DC1B=duty & 0x3;
     CCPR1L=(duty >> 2) & 0xFF; 
 }

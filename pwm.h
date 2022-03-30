@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
     void init_pwm();
-    void setDuty(int duty);
+    void setDuty(unsigned int duty);
 
 
 #ifdef	__cplusplus

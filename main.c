@@ -1,4 +1,3 @@
-
 #include <xc.h>
 #include <stdint.h>
 #include "system.h"
@@ -15,7 +14,7 @@ uint8_t seconds;
 
 unsigned int target_load;
 unsigned int load;
-int pwm;
+unsigned int pwm;
 unsigned char anode;
 unsigned char display[4];
 
@@ -41,11 +40,13 @@ void int2bcd(int num, uint8_t* bcd, int maxDig) {
 
 void __interrupt() isr() {
     if (TMR0IF) {
+        /* T = 1 / (8 000 000 / 4 / 64 / 256) = 8.2ms */
         driveNixie(&anode, &display[0]);
         start_adc(13);
         TMR0IF=0;
     }
     if (TMR1IF) {
+        /* T = 1s */
         seconds++;
         if (seconds==60) {
             seconds=0;
@@ -61,7 +62,7 @@ void __interrupt() isr() {
         TMR1=0xFFFF-32768;
         TMR1IF=0;
     }
-    if (ADIF) {   
+    if (ADIF) {
         ADCON0bits.CHS=13;
         load+=ADRESH;        
         if (load>target_load && pwm > 0) pwm--;
@@ -100,8 +101,8 @@ void main(void) {
     
     /* Hard coded time */
     seconds= 9;
-    minutes = 37;
-    hours = 12;
+    minutes = 54;
+    hours = 16;
     while (1) {
         int2bcd(minutes, &display[2], 2);
         int2bcd(hours, &display[0], 2);
