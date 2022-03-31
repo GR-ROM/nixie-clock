@@ -1,6 +1,9 @@
 #include <xc.h>
 
 void init_gpio() {
+    ANSELA=0x00;
+    ANSELB=0x00;
+    
     ANSELBbits.ANSB5=1;     // HV sense ADC
     TRISBbits.TRISB5=1;
     

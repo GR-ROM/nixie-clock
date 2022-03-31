@@ -12,11 +12,12 @@ uint8_t hours;
 uint8_t minutes;
 uint8_t seconds;
 
+extern int blinkCounter;
 unsigned int target_load;
 unsigned int load;
 unsigned int pwm;
-unsigned char anode;
-unsigned char display[4];
+unsigned char volatile anode;
+unsigned char volatile display[4];
 
 void int2bcd(int num, uint8_t* bcd, int maxDig) {
     uint8_t d;
@@ -40,7 +41,7 @@ void int2bcd(int num, uint8_t* bcd, int maxDig) {
 
 void __interrupt() isr() {
     if (TMR0IF) {
-        /* T = 1 / (8 000 000 / 4 / 64 / 256) = 8.2ms */
+        /* T = 1 / (8 000 000 / 4 / 32 / 256) = 4ms */
         driveNixie(&anode, &display[0]);
         start_adc(13);
         TMR0IF=0;
@@ -64,9 +65,10 @@ void __interrupt() isr() {
     }
     if (ADIF) {
         ADCON0bits.CHS=13;
-        load+=ADRESH;        
-        if (load>target_load && pwm > 0) pwm--;
-        if (load<target_load && pwm < 400) pwm++;
+        load = ADRESH;
+        int delta = target_load - load; 
+        
+        if (delta + pwm > 0 && delta + pwm < 400) pwm+=delta;
         setDuty(pwm);  
         load = 0;
         ADIF = 0;
@@ -75,8 +77,6 @@ void __interrupt() isr() {
 
 void main(void) {
     configure_osc();
-    ANSELA=0x00;
-    ANSELB=0x00;
     init_gpio();
     /* Dynamic indication */
     init_timer0();
@@ -96,7 +96,8 @@ void main(void) {
     anode = 0;
     load = 0;
     pwm = 10;
-    /* Set nixie voltage to 200V DC */
+    blinkCounter = 0;
+    /* Set nixie voltage to 180V DC */
     target_load = 155;
     
     /* Hard coded time */
@@ -106,6 +107,8 @@ void main(void) {
     while (1) {
         int2bcd(minutes, &display[2], 2);
         int2bcd(hours, &display[0], 2);
+        setBlinking(DIG1 | DIG2, &display[0]);
+        __delay_ms(200);
     }
 }
 /**

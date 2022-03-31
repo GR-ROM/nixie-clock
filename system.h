@@ -35,8 +35,8 @@ extern "C" {
 
 // #pragma config statements should precede project file includes.
 // Use project enums instead of #define for ON and OFF.
-    
-#define __XTAL_FREQ 8000000l;
+   
+#define _XTAL_FREQ 8000000
     
 #include <xc.h>
 void configure_osc();

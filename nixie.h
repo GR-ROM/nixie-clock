@@ -11,10 +11,20 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+    
+#include "gpio.h"
+#include <xc.h>
 
-    void driveCathode(unsigned char digit);
-    void driveNixie(unsigned char* anode, unsigned char* display) ;
 
+#define DIG1 0x01
+#define DIG2 0x02
+#define DIG3 0x04
+#define DIG4 0x08
+    
+void driveCathode(unsigned char digit);
+void driveNixie(unsigned char* anode, unsigned char* display);
+void setBlinking(unsigned char mask, unsigned char* display);
+void clrBlinking(unsigned char mask, unsigned char* display);
 
 #ifdef	__cplusplus
 }
