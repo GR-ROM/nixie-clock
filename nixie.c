@@ -23,7 +23,7 @@ static void turnAnode(unsigned char anode) {
             case 2: AN3 = 1; break;
             case 3: AN4 = 1; break;
             default: break;
-        }
+    }
 }
 
 /* Number to cathode mapping */
@@ -38,7 +38,7 @@ void driveCathode(unsigned char digit) {
     CA7=0;
     CA8=0;
     CA9=0;
-    switch (digit & 0x0F) of: {
+    switch (digit & 0x0F) {
         case 0: CA0=1; break;
         case 1: CA1=1; break;
         case 2: CA2=1; break;
@@ -54,7 +54,7 @@ void driveCathode(unsigned char digit) {
 }
 
 /*
- * A routine responsive for dynamic indication, should 
+ * A routine responsible for dynamic indication, should 
  * be called at least 100 times per second
  * anode - points to the variable with a number of the current active anode
  * display - four bytes display buffer
@@ -67,15 +67,15 @@ void driveNixie(unsigned char* anode, unsigned char* display) {
     AN3 = 0;
     AN4 = 0;
        
-        if ((display[*anode] & 0xF0) == 0x20) {
-            if (blinkCounter > 100) {
-                turnAnode(*anode);
-            }
-        } else {
+    if ((display[*anode] & 0xF0) == 0x20) {
+        if (blinkCounter > 100) {
             turnAnode(*anode);
+            driveCathode(display[*anode]);
         }
-
-        
-    driveCathode(display[(*anode)++]);
-    if (*anode > 3) *anode = 0;
+    } else {
+        turnAnode(*anode);
+        driveCathode(display[*anode]);
+    }
+    
+    if ((*anode)++ > 3) *anode = 0;
 }

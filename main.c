@@ -7,6 +7,14 @@
 #include "timer0.h"
 #include "timer1.h"
 #include "adc.h"
+#include "buttons.h"
+
+#define MODE_CLOCK 0
+#define MODE_SET_HOUR 1
+#define MODE_SET_MINUTES 2
+
+#define DIM 130
+#define BRIGHT 150
 
 uint8_t hours;
 uint8_t minutes;
@@ -17,7 +25,10 @@ unsigned int target_load;
 unsigned int load;
 unsigned int pwm;
 unsigned char volatile anode;
+unsigned char volatile back[4];
 unsigned char volatile display[4];
+unsigned char mode;
+unsigned char brightness;
 
 void int2bcd(int num, uint8_t* bcd, int maxDig) {
     uint8_t d;
@@ -28,27 +39,31 @@ void int2bcd(int num, uint8_t* bcd, int maxDig) {
         c++;
     }
     
-    for (int i=0;i!=maxDig;i++){
+    for (int i = 0; i != maxDig; i++){
         if (i>c) {
             d = 0; 
         } else {
             d = num % 10;
             num /= 10;   
         }
-        bcd[maxDig-i-1]=d;
+        bcd[maxDig-i-1] &= 0xF0;
+        bcd[maxDig-i-1] |= d;
     }
 }
 
+static void flush() {
+    display[0]=back[0];
+    display[1]=back[1];
+    display[2]=back[2];
+    display[3]=back[3];
+}
+
 void __interrupt() isr() {
-    if (TMR0IF) {
-        /* T = 1 / (8 000 000 / 4 / 32 / 256) = 4ms */
-        driveNixie(&anode, &display[0]);
-        start_adc(13);
-        TMR0IF=0;
-    }
     if (TMR1IF) {
+        TMR1=0xFFFF-32768;
         /* T = 1s */
         seconds++;
+        DP = ~DP;
         if (seconds==60) {
             seconds=0;
             minutes++;
@@ -60,14 +75,18 @@ void __interrupt() isr() {
                 }
             }
         }
-        TMR1=0xFFFF-32768;
         TMR1IF=0;
+    }
+    if (TMR0IF) {
+        /* T = 1 / (8 000 000 / 4 / 32 / 256) = 4ms */
+        driveNixie(&anode, &display[0]);
+        start_adc(13);
+        TMR0IF=0;
     }
     if (ADIF) {
         ADCON0bits.CHS=13;
         load = ADRESH;
         int delta = target_load - load; 
-        
         if (delta + pwm > 0 && delta + pwm < 400) pwm+=delta;
         setDuty(pwm);  
         load = 0;
@@ -78,6 +97,7 @@ void __interrupt() isr() {
 void main(void) {
     configure_osc();
     init_gpio();
+    init_buttons();
     /* Dynamic indication */
     init_timer0();
     start_timer0();
@@ -93,22 +113,75 @@ void main(void) {
     GIE=1;
     PEIE=1;
     
+    brightness = 0;
+    mode = MODE_CLOCK;
     anode = 0;
     load = 0;
     pwm = 10;
     blinkCounter = 0;
     /* Set nixie voltage to 180V DC */
-    target_load = 155;
+    target_load = DIM;
     
     /* Hard coded time */
     seconds= 9;
-    minutes = 54;
-    hours = 16;
+    minutes = 06;
+    hours = 14;
+    
+    unsigned char setHours;
+    unsigned char setMinutes;
     while (1) {
-        int2bcd(minutes, &display[2], 2);
-        int2bcd(hours, &display[0], 2);
-        setBlinking(DIG1 | DIG2, &display[0]);
-        __delay_ms(200);
+        switch (mode) {
+            case MODE_CLOCK:
+                int2bcd(minutes, &back[2], 2);
+                int2bcd(hours, &back[0], 2);
+            break;
+            case MODE_SET_HOUR:
+                int2bcd(minutes, &back[2], 2);
+                int2bcd(setHours, &back[0], 2);
+            break;
+            case MODE_SET_MINUTES:
+                int2bcd(setMinutes, &back[2], 2);
+                int2bcd(hours, &back[0], 2);
+            break;
+        }
+        flush();
+        /* User input handling */
+        checkButtons();
+        if (getButtonsPressed() & MODE_BTN) {
+            if (mode++ == 3) mode = 0;         
+            if (mode == 0) {
+                clrBlinking(DIG1 | DIG2 | DIG3 | DIG4, &back[0]);
+                hours = setHours;
+                minutes = setMinutes;
+            }
+            if (mode == 1) { 
+                setHours = hours;
+                clrBlinking(DIG3 | DIG4, &back[0]);
+                setBlinking(DIG1 | DIG2, &back[0]);
+            }
+            if (mode == 2) {
+                setMinutes = minutes;
+                clrBlinking(DIG1 | DIG2, &back[0]);
+                setBlinking(DIG3 | DIG4, &back[0]);
+            }
+        }
+        if (getButtonsPressed() & SET_BTN) {
+            switch (mode) {
+                case MODE_CLOCK: 
+                    if (brightness++ == 2) brightness = 0; 
+                    if (brightness == 0) {
+                        target_load = BRIGHT;
+                    }
+                    if (brightness == 1) {
+                        target_load = DIM;
+                    }
+                    break;
+                case MODE_SET_HOUR: if (setHours++ == 24) setHours = 0; break;
+                case MODE_SET_MINUTES: if (setMinutes++ == 60) setMinutes = 0; break;
+            }
+        }
+        clearState();
+        __delay_ms(1);
     }
 }
 /**

@@ -27,6 +27,8 @@ extern "C" {
 #define CA7 PORTCbits.RC7
 #define CA8 PORTAbits.RA3
 #define CA9 PORTCbits.RC5
+    
+#define DP PORTCbits.RC3
 
 void init_gpio();
 

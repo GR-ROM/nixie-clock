@@ -4,12 +4,22 @@ void init_gpio() {
     ANSELA=0x00;
     ANSELB=0x00;
     
+    /* Enable WPU */
+    OPTION_REGbits.nWPUEN = 0;
+    WPUB = 0x00;
+    WPUBbits.WPUB6 = 1;
+    WPUBbits.WPUB7 = 1;
+    
+    /* Inputs */
     ANSELBbits.ANSB5=1;     // HV sense ADC
     TRISBbits.TRISB5=1;
     
+    TRISBbits.TRISB6=1;     // MODE button
+    TRISBbits.TRISB7=1;     // SET button
+    
     TRISCbits.TRISC0=1;
     TRISCbits.TRISC1=1;
-    
+    /* Outputs */
     TRISCbits.TRISC2=0;     // Set PWM to output
     TRISAbits.TRISA0=0;     // AN1
     TRISBbits.TRISB2=0;     // AN2
@@ -26,4 +36,5 @@ void init_gpio() {
     TRISCbits.TRISC6=0;     // CA3
     TRISCbits.TRISC5=0;     // CA9
     TRISCbits.TRISC4=0;     // CA1
+    TRISCbits.TRISC3=0;     // DP
 }
