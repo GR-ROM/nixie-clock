@@ -30,6 +30,8 @@ extern "C" {
     
 #define DP PORTCbits.RC3
 
+#define VDD PORTBbits.RB4
+    
 void initGPIO();
 void disableGPIO();
 

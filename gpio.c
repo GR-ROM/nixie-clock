@@ -13,10 +13,8 @@ void initGPIO() {
     /* Inputs */
     ANSELBbits.ANSB5=1;     // HV sense ADC
     TRISBbits.TRISB5=1;
-    ANSELBbits.ANSB4=1;     // VDD sense ADC
     TRISBbits.TRISB4=1;
-    
-    
+       
     TRISBbits.TRISB6=1;     // MODE button
     TRISBbits.TRISB7=1;     // SET button
     

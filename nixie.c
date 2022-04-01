@@ -66,5 +66,5 @@ void driveNixie(unsigned char* anode, unsigned char* display) {
             default: break;
         }
     }
-    if ((*anode)++ > 3) *anode = 0;
+    if (++(*anode) > 3) *anode = 0;
 }

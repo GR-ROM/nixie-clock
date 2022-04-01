@@ -11,7 +11,7 @@ void inline stop_timer0() {
 
 void init_timer0() {
     TMR0=0;
-    OPTION_REGbits.PS=0b100;  // 1:64
+    OPTION_REGbits.PS=0b010;  // 1:16
     OPTION_REGbits.PSA=0;
       
     TMR0IF=0;
