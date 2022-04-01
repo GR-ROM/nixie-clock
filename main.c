@@ -99,11 +99,11 @@ void __interrupt() isr() {
     }
     if (ADIF) {
         load = ADRESH;
-        int value = target_load - load;
         if (adcInput == ADC_INPUT_HV) {
-            pwm += value;
-            if (pwm > MAX_PWM) pwm = MAX_PWM;
-            if (pwm < MIN_PWM) pwm = MIN_PWM;
+            if (load < target_load) pwm += 2;
+            if (load > target_load) pwm -= 2;
+//            if (pwm > 255) pwm = 255;
+//            if (pwm < MIN_PWM) pwm = MIN_PWM;
             setDuty(pwm);
         }
         //if (adcInput == ADC_INPUT_VDD) checkPower(load);
@@ -204,8 +204,7 @@ void main(void) {
                     if (brightness++ == 2) brightness = 0; 
                     if (brightness == 0) {
                         target_load = BRIGHT;
-                    }
-                    if (brightness == 1) {
+                    } else {
                         target_load = DIM;
                     }
                     break;

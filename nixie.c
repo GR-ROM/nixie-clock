@@ -16,18 +16,12 @@ void clrBlinking(unsigned char mask, unsigned char* display) {
     if (mask & DIG4) display[3] &= ~0x20;
 }
 
-static void turnAnode(unsigned char anode) {
-    switch (anode) {
-            case 0: AN1 = 1; break;
-            case 1: AN2 = 1; break;
-            case 2: AN3 = 1; break;
-            case 3: AN4 = 1; break;
-            default: break;
-    }
-}
-
-/* Number to cathode mapping */
-void driveCathode(unsigned char digit) {
+static void blankDisplay() {
+    AN1 = 0;
+    AN2 = 0;
+    AN3 = 0;
+    AN4 = 0;
+    
     CA0=0;
     CA1=0;
     CA2=0;
@@ -38,19 +32,6 @@ void driveCathode(unsigned char digit) {
     CA7=0;
     CA8=0;
     CA9=0;
-    switch (digit & 0x0F) {
-        case 0: CA0=1; break;
-        case 1: CA1=1; break;
-        case 2: CA2=1; break;
-        case 3: CA3=1; break;
-        case 4: CA4=1; break;
-        case 5: CA5=1; break;
-        case 6: CA6=1; break;
-        case 7: CA7=1; break;
-        case 8: CA8=1; break;
-        case 9: CA9=1; break;
-        default: break;
-    }
 }
 
 /*
@@ -62,20 +43,28 @@ void driveCathode(unsigned char digit) {
 void driveNixie(unsigned char* anode, unsigned char* display) {
     if (blinkCounter++ > 200) blinkCounter = 0;
     /* Dynamic indication */
-    AN1 = 0;
-    AN2 = 0;
-    AN3 = 0;
-    AN4 = 0;
-       
-    if ((display[*anode] & 0xF0) == 0x20) {
-        if (blinkCounter > 100) {
-            turnAnode(*anode);
-            driveCathode(display[*anode]);
+    blankDisplay();
+    if (((display[*anode] & 0xF0) == 0x20 && blinkCounter > 100) || (display[*anode] & 0xF0) != 0x20) {
+        switch (*anode) {
+            case 0: AN1 = 1; break;
+            case 1: AN2 = 1; break;
+            case 2: AN3 = 1; break;
+            case 3: AN4 = 1; break;
+            default: break;
         }
-    } else {
-        turnAnode(*anode);
-        driveCathode(display[*anode]);
+        switch (display[*anode] & 0x0F) {
+            case 0: CA0=1; break;
+            case 1: CA1=1; break;
+            case 2: CA2=1; break;
+            case 3: CA3=1; break;
+            case 4: CA4=1; break;
+            case 5: CA5=1; break;
+            case 6: CA6=1; break;
+            case 7: CA7=1; break;
+            case 8: CA8=1; break;
+            case 9: CA9=1; break;
+            default: break;
+        }
     }
-    
     if ((*anode)++ > 3) *anode = 0;
 }

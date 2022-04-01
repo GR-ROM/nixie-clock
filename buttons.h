@@ -18,8 +18,8 @@ extern "C" {
 #define MODE_PORT PORTBbits.RB7
 #define SET_PORT PORTBbits.RB6
     
-#define BTN_THRESHOLD 15
-#define BTN_LONG_THRESHOLD 2000
+#define BTN_THRESHOLD 10
+#define BTN_LONG_THRESHOLD 1000
     
 unsigned char getButtonsPressed();
 void init_buttons();
