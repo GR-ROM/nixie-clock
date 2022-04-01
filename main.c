@@ -73,7 +73,7 @@ static void checkPower(uint8_t adc) {
 
 void __interrupt() isr() {
     if (TMR1IF) {
-        TMR1=0x7FFF; // 0xFFFF - 0x8000 (32768) = 0x7FFF
+        TMR1H=0x7F; // 0xFFFF - 0x8000 (32768) = 0x7FFF
         /* T = 1s */
         seconds++;
         DP = ~DP;
@@ -138,7 +138,7 @@ void main(void) {
     engageFullPower();
     init_buttons();
     /* Clock timer */
-    init_timer1(0);
+    init_timer1(0x7FFF);
     startTimer1();
     /* Allow interrupts */
     GIE=1;
