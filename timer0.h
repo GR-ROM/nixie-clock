@@ -15,6 +15,7 @@ extern "C" {
 void init_timer0();
 void inline stop_timer0();
 void inline start_timer0();
+void disableTimer0();
 
 #ifdef	__cplusplus
 }

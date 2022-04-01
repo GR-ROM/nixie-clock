@@ -16,6 +16,9 @@
 #define DIM 130
 #define BRIGHT 150
 
+#define ADC_INPUT_HV 13
+#define ADC_INPUT_VDD 11
+
 uint8_t hours;
 uint8_t minutes;
 uint8_t seconds;
@@ -29,6 +32,11 @@ unsigned char volatile back[4];
 unsigned char volatile display[4];
 unsigned char mode;
 unsigned char brightness;
+unsigned char backup;
+unsigned char adcInput;
+
+static void engageFullPower();
+static void engagePowerDown();
 
 void int2bcd(int num, uint8_t* bcd, int maxDig) {
     uint8_t d;
@@ -58,9 +66,14 @@ static void flush() {
     display[3]=back[3];
 }
 
+static void checkPower(uint8_t adc) {
+    if (adc > 127) engageFullPower();
+    if (adc < 100) engagePowerDown();
+}
+
 void __interrupt() isr() {
     if (TMR1IF) {
-        TMR1=0xFFFF-32768;
+        TMR1=0x7FFF; // 0xFFFF - 0x8000 (32768) = 0x7FFF
         /* T = 1s */
         seconds++;
         DP = ~DP;
@@ -80,34 +93,52 @@ void __interrupt() isr() {
     if (TMR0IF) {
         /* T = 1 / (8 000 000 / 4 / 32 / 256) = 4ms */
         driveNixie(&anode, &display[0]);
-        start_adc(13);
+        if (adcInput == ADC_INPUT_HV) start_adc(ADC_INPUT_HV);
+        //if (adcInput == ADC_INPUT_VDD) start_adc(ADC_INPUT_VDD);
         TMR0IF=0;
     }
     if (ADIF) {
-        ADCON0bits.CHS=13;
         load = ADRESH;
-        int delta = target_load - load; 
-        if (delta + pwm > 0 && delta + pwm < 400) pwm+=delta;
-        setDuty(pwm);  
+        int value = target_load - load;
+        if (adcInput == ADC_INPUT_HV) {
+            pwm += value;
+            if (pwm > MAX_PWM) pwm = MAX_PWM;
+            if (pwm < MIN_PWM) pwm = MIN_PWM;
+            setDuty(pwm);
+        }
+        //if (adcInput == ADC_INPUT_VDD) checkPower(load);
         load = 0;
         ADIF = 0;
     }
 }
 
-void main(void) {
-    configure_osc();
-    init_gpio();
-    init_buttons();
+static void engageFullPower() {
+    configureOscillatorFullPower();
+    initGPIO();
     /* Dynamic indication */
     init_timer0();
     start_timer0();
     /* HV converter control */
     init_adc();    
-    init_pwm(0x7F);
-    start_adc(13);
-    setDuty(10);
+    initPWM(TIMER2_PERIOD);
+    start_adc(ADC_INPUT_HV);
+    setDuty(MIN_PWM);
+}
+
+static void engagePowerDown() {
+    configureOscillatorPowerDown();
+    disableTimer0();
+    disablePWM();
+    disableGPIO();
+}
+
+void main(void) {
+    engageFullPower();
+    engagePowerDown();
+    engageFullPower();
+    init_buttons();
     /* Clock timer */
-    init_timer1(0xFFFF-32768);
+    init_timer1(0);
     startTimer1();
     /* Allow interrupts */
     GIE=1;
@@ -119,8 +150,10 @@ void main(void) {
     load = 0;
     pwm = 10;
     blinkCounter = 0;
+    backup = 0;
     /* Set nixie voltage to 180V DC */
     target_load = DIM;
+    adcInput = ADC_INPUT_HV;
     
     /* Hard coded time */
     seconds= 9;

@@ -17,3 +17,9 @@ void init_timer0() {
     TMR0IF=0;
     TMR0IE=1;
 }
+
+void disableTimer0() {
+    OPTION_REGbits.PS=0b000;  // off
+    TMR0IF=0;
+    TMR0IE=0;
+}

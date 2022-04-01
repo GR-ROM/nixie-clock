@@ -1,6 +1,6 @@
 #include <xc.h>
 
-void init_gpio() {
+void initGPIO() {
     ANSELA=0x00;
     ANSELB=0x00;
     
@@ -13,6 +13,9 @@ void init_gpio() {
     /* Inputs */
     ANSELBbits.ANSB5=1;     // HV sense ADC
     TRISBbits.TRISB5=1;
+    ANSELBbits.ANSB4=1;     // VDD sense ADC
+    TRISBbits.TRISB4=1;
+    
     
     TRISBbits.TRISB6=1;     // MODE button
     TRISBbits.TRISB7=1;     // SET button
@@ -37,4 +40,18 @@ void init_gpio() {
     TRISCbits.TRISC5=0;     // CA9
     TRISCbits.TRISC4=0;     // CA1
     TRISCbits.TRISC3=0;     // DP
+}
+
+void disableGPIO() {
+    ANSELA=0x00;
+    ANSELB=0x00;
+    
+    /* Disable WPU */
+    OPTION_REGbits.nWPUEN = 1;
+    WPUB = 0x00;
+    
+    /* Disable all outputs */
+    TRISB = 0xFF;
+    TRISA = 0xFF;
+    TRISC = 0xFF;
 }

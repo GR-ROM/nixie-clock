@@ -30,8 +30,8 @@ extern "C" {
     
 #define DP PORTCbits.RC3
 
-void init_gpio();
-
+void initGPIO();
+void disableGPIO();
 
 #ifdef	__cplusplus
 }

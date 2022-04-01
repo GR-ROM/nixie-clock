@@ -11,7 +11,7 @@ void init_timer1(uint16_t initial) {
     T1CONbits.nT1SYNC = 1;
     /* Do not start the timer */
     T1CONbits.TMR1ON = 0;
-    TMR1 = initial;
+    TMR1=0x7FFF;
     TMR1IF = 0;
     TMR1IE = 1;
 }
